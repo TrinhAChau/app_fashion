@@ -1,40 +1,11 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-
+import CategoryScreen from "./category/categoryScreen";
+import ProductScreen from "./product/productScreen";
+import UserScreen from "./user/userScreen";
 // Các màn hình
-function UserScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Quản lý Người Dùng</Text>
-    </View>
-  );
-}
-
-function ProductScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Quản lý Sản Phẩm</Text>
-    </View>
-  );
-}
-
-function CategoryScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Quản lý Danh Mục</Text>
-    </View>
-  );
-}
-
-function OrderScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Quản lý Đơn Hàng</Text>
-    </View>
-  );
-}
 
 // Điều hướng tab với icon
 const Tab = createBottomTabNavigator();
@@ -63,15 +34,13 @@ export default function AdminPanel() {
         tabBarStyle: { backgroundColor: "#fff", paddingBottom: 5 },
       })}
     >
-      <Tab.Screen name="User" component={UserScreen} />
-      <Tab.Screen name="Product" component={ProductScreen} />
-      <Tab.Screen name="Category" component={CategoryScreen} />
-      <Tab.Screen name="Order" component={OrderScreen} />
+      <Tab.Screen name="Quản lý người dùng" component={UserScreen} />
+      <Tab.Screen name="Quản lý sản phẩm" component={ProductScreen} />
+      <Tab.Screen name="Quản lý danh mục" component={CategoryScreen} />
     </Tab.Navigator>
   );
 }
 
-// CSS tối ưu
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -79,5 +48,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FAFAFA",
   },
-  title: { fontSize: 22, fontWeight: "bold", color: "#333" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 16 },
 });
