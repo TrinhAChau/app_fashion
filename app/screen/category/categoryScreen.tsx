@@ -1,33 +1,58 @@
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import {
+  CreateCategory,
+  DeteleCategory,
+  GetListCategory,
+  UpdateCateGory,
+} from "@/app/api/caterory";
+import { Category } from "@/app/types/category.type";
+import { Picker } from "@react-native-picker/picker";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, StyleSheet, View } from "react-native";
 import {
   Button,
   Card,
   IconButton,
   Searchbar,
+  Text,
   TextInput,
 } from "react-native-paper";
 
+const token =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJyb2xlX2lkIjoxLCJpYXQiOjE3NTAwMDI5ODF9.uhsG5MBzY3dAP0ZG0wcbBYf98kZRlf50iRPDmQXSUs4";
+
 // Dữ liệu mẫu ban đầu
-const mockCategories = [
-  { id: "1", name: "Áo", description: "Các loại áo thời trang" },
-  { id: "2", name: "Quần", description: "Các loại quần thời trang" },
-];
 
 const CategoryScreen = () => {
-  const [categories, setCategories] = useState(mockCategories); // Danh sách danh mục hiển thị
+  const [categories, setCategories] = useState<Category[]>([]) || null; // Danh sách danh mục hiển thị
+
+  //Hàm lấy data DS sản phẩm
+  const fetchCategory = async () => {
+    try {
+      const response = await GetListCategory();
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh sách người dùng:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategory();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState(""); // Từ khóa tìm kiếm
-  const [editCategoryId, setEditCategoryId] = useState<string | null>(null); // ID đang chỉnh sửa
-  const [editedCategory, setEditedCategory] = useState({
-    id: "",
-    name: "",
-    description: "",
-  });
+  const [editCategoryId, setEditCategoryId] = useState(0); // ID đang chỉnh sửa
+
   const [adding, setAdding] = useState(false); // Trạng thái hiển thị form thêm mới
-  const [newCategory, setNewCategory] = useState({
-    id: "",
+  const [newCategory, setNewCategory] = useState<Category>({
     name: "",
     description: "",
+    parent_id: null, // thêm parent_id
+  });
+
+  const [editedCategory, setEditedCategory] = useState<Category>({
+    name: "",
+    description: "",
+    parent_id: null,
   });
 
   // Lọc danh mục theo từ khóa
@@ -36,33 +61,78 @@ const CategoryScreen = () => {
   );
 
   // Lưu chỉnh sửa
-  const handleSaveEdit = () => {
-    setCategories((prev) =>
-      prev.map((cat) => (cat.id === editedCategory.id ? editedCategory : cat))
+  const handleSaveEdit = async () => {
+    const isDuplicate = categories.some(
+      (cat) =>
+        cat.name.toLowerCase().trim() ===
+          editedCategory.name.toLowerCase().trim() &&
+        cat.category_id !== editCategoryId
     );
-    setEditCategoryId(null);
+    if (isDuplicate) {
+      Alert.alert("Lỗi", "Tên danh mục đã tồn tại.");
+      return;
+    }
+    try {
+      await UpdateCateGory(editedCategory, editCategoryId, token);
+      await fetchCategory();
+      setEditCategoryId(0);
+      Alert.alert("Thành công", "Đã cập nhật danh mục.");
+    } catch (err) {
+      console.error("Lỗi cập nhật:", err);
+      Alert.alert("Lỗi", "Không thể cập nhật.");
+    }
   };
 
   // Xóa danh mục
-  const handleDelete = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  const handleDelete = (id: number) => {
+    Alert.alert("Xác nhận", "Bạn có muốn xoá danh mục này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xoá",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await DeteleCategory(id, token);
+            await fetchCategory();
+            Alert.alert("Đã xoá thành công");
+          } catch (err) {
+            console.error("Lỗi xoá:", err);
+            Alert.alert("Lỗi", "Không thể xoá danh mục.");
+          }
+        },
+      },
+    ]);
   };
 
   // Thêm danh mục mới
-  const handleAdd = () => {
-    if (!newCategory.name.trim()) return; // Kiểm tra không để trống tên
-    const newItem = {
-      ...newCategory,
-      id: Date.now().toString(), // ID tạm thời dùng timestamp
-    };
-    setCategories((prev) => [newItem, ...prev]);
-    setNewCategory({ id: "", name: "", description: "" });
-    setAdding(false);
+  const handleAdd = async () => {
+    if (!newCategory.name.trim()) return;
+
+    const isDuplicate = categories.some(
+      (cat) =>
+        cat.name.toLowerCase().trim() === newCategory.name.toLowerCase().trim()
+    );
+
+    if (isDuplicate) {
+      Alert.alert("Lỗi", "Danh mục đã tồn tại.");
+      return;
+    }
+
+    try {
+      await CreateCategory(newCategory, token);
+      await fetchCategory();
+      setNewCategory({ name: "", description: "" });
+      setAdding(false);
+      Alert.alert("Thành công", "Đã thêm danh mục.");
+    } catch (err) {
+      console.error("Lỗi thêm danh mục:", err);
+      Alert.alert("Lỗi", "Không thể thêm danh mục.");
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Thanh tìm kiếm và nút Thêm */}
+      {/* Thanh tìm kiếm + nút thêm */}
       <View style={styles.topBar}>
         <Searchbar
           placeholder="Tìm kiếm danh mục"
@@ -79,7 +149,7 @@ const CategoryScreen = () => {
         />
       </View>
 
-      {/* Form thêm danh mục mới */}
+      {/* Form thêm danh mục */}
       {adding && (
         <Card style={styles.card}>
           <Card.Content>
@@ -87,7 +157,7 @@ const CategoryScreen = () => {
               label="Tên danh mục"
               value={newCategory.name}
               onChangeText={(text) =>
-                setNewCategory({ ...newCategory, name: text })
+                setNewCategory((prev) => ({ ...prev, name: text }))
               }
               mode="outlined"
               style={styles.input}
@@ -96,11 +166,28 @@ const CategoryScreen = () => {
               label="Mô tả"
               value={newCategory.description}
               onChangeText={(text) =>
-                setNewCategory({ ...newCategory, description: text })
+                setNewCategory((prev) => ({ ...prev, description: text }))
               }
               mode="outlined"
               style={styles.input}
             />
+            <Text style={styles.label}>Danh mục liên quan</Text>
+            <Picker
+              selectedValue={newCategory.parent_id}
+              onValueChange={(value) =>
+                setNewCategory((prev) => ({ ...prev, parent_id: value }))
+              }
+              style={styles.input}
+            >
+              <Picker.Item label="---" value={null} />
+              {categories.map((cat) => (
+                <Picker.Item
+                  key={cat.category_id}
+                  label={cat.name}
+                  value={cat.category_id}
+                />
+              ))}
+            </Picker>
             <View style={styles.row}>
               <Button
                 mode="contained"
@@ -121,10 +208,10 @@ const CategoryScreen = () => {
         </Card>
       )}
 
-      {/* Danh sách các danh mục */}
+      {/* Danh sách danh mục */}
       <FlatList
         data={filteredCategories}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.category_id?.toString() || ""}
         renderItem={({ item }) => (
           <Card style={styles.card}>
             <Card.Title
@@ -132,30 +219,28 @@ const CategoryScreen = () => {
               subtitle={`Mô tả: ${item.description}`}
             />
             <Card.Actions>
-              {/* Nút sửa */}
               <IconButton
                 icon="pencil"
                 onPress={() => {
-                  setEditCategoryId(item.id);
-                  setEditedCategory(item); // Gán giá trị để chỉnh sửa
+                  setEditCategoryId((item.category_id as number) || 0);
+                  setEditedCategory(item);
                 }}
               />
-              {/* Nút xóa */}
               <IconButton
                 icon="delete"
                 iconColor="red"
-                onPress={() => handleDelete(item.id)}
+                onPress={() => handleDelete(item.category_id as number)}
               />
             </Card.Actions>
 
-            {/* Form chỉnh sửa nếu đúng ID */}
-            {editCategoryId === item.id && (
+            {/* Form chỉnh sửa */}
+            {editCategoryId === item.category_id && (
               <View style={styles.editForm}>
                 <TextInput
                   label="Tên danh mục"
                   value={editedCategory.name}
                   onChangeText={(text) =>
-                    setEditedCategory({ ...editedCategory, name: text })
+                    setEditedCategory((prev) => ({ ...prev, name: text }))
                   }
                   mode="outlined"
                   style={styles.input}
@@ -164,14 +249,34 @@ const CategoryScreen = () => {
                   label="Mô tả"
                   value={editedCategory.description}
                   onChangeText={(text) =>
-                    setEditedCategory({
-                      ...editedCategory,
+                    setEditedCategory((prev) => ({
+                      ...prev,
                       description: text,
-                    })
+                    }))
                   }
                   mode="outlined"
                   style={styles.input}
                 />
+                <Text style={styles.label}>Danh mục liên quan</Text>
+                <Picker
+                  selectedValue={editedCategory.parent_id ?? null}
+                  onValueChange={(value) =>
+                    setEditedCategory((prev) => ({ ...prev, parent_id: value }))
+                  }
+                  style={styles.input}
+                >
+                  <Picker.Item label="---" value={null} />
+                  {categories
+                    .filter((cat) => cat.category_id !== editCategoryId)
+                    .map((cat) => (
+                      <Picker.Item
+                        key={cat.category_id}
+                        label={cat.name}
+                        value={cat.category_id}
+                      />
+                    ))}
+                </Picker>
+
                 <Button
                   mode="contained"
                   onPress={handleSaveEdit}
@@ -189,40 +294,24 @@ const CategoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+  container: { flex: 1, padding: 16 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  searchBar: {
-    flex: 1,
-    marginRight: 8,
-  },
-  addButton: {
-    backgroundColor: "#007AFF",
-  },
-  card: {
-    marginBottom: 12,
-    backgroundColor: "#F0F4FF",
-  },
-  input: {
-    marginBottom: 10,
-  },
-  button: {
-    marginRight: 8,
-    marginTop: 10,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "flex-end", // Các nút nằm cùng hàng
-  },
-  editForm: {
-    padding: 12,
+  searchBar: { flex: 1, marginRight: 8 },
+  addButton: { backgroundColor: "#007AFF" },
+  card: { marginBottom: 12, backgroundColor: "#F0F4FF" },
+  input: { marginBottom: 10, backgroundColor: "white" },
+  button: { marginRight: 8, marginTop: 10 },
+  row: { flexDirection: "row", justifyContent: "flex-end" },
+  editForm: { padding: 12 },
+  label: {
+    marginBottom: 4,
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

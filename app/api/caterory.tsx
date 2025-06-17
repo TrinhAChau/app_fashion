@@ -18,7 +18,7 @@ const GetListCategory = async () => {
 };
 
 // Cập nhật danh mục sản phẩm
-const UpdateCateGory = async (values: object, id: string, token: string) => {
+const UpdateCateGory = async (values: object, id: number, token: string) => {
   const response = await BASE_URL.put(`/categories/${id}`, values, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -28,7 +28,7 @@ const UpdateCateGory = async (values: object, id: string, token: string) => {
 };
 
 // Xóa danh mục sản phẩm
-const DeteleCategory = async (id: string, token: string) => {
+const DeteleCategory = async (id: number, token: string) => {
   const response = await BASE_URL.delete(`/categories/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
