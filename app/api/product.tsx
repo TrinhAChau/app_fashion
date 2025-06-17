@@ -17,7 +17,7 @@ const CreateProduct = async (values: object, token: string) => {
 };
 
 // Sửa sản phẩm
-const UpdateProduct = async (values: object, id: string, token: string) => {
+const UpdateProduct = async (values: object, id: number, token: string) => {
   const response = await BASE_URL.put(`/products/${id}`, values, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -27,7 +27,7 @@ const UpdateProduct = async (values: object, id: string, token: string) => {
 };
 
 // Xóa sản phẩm
-const DeteleProduct = async (id: string, token: string) => {
+const DeteleProduct = async (id: number, token: string) => {
   const response = await BASE_URL.delete(`/products/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -46,10 +46,16 @@ const SearchProduct = async (name: string) => {
   return response.data;
 };
 
+const GetProductById = async (id: number) => {
+  const response = await BASE_URL.get(`/products/${id}`, {});
+  return response.data;
+};
+
 export {
   CreateProduct,
   DeteleProduct,
   GetListProduct,
+  GetProductById,
   SearchProduct,
   UpdateProduct,
 };

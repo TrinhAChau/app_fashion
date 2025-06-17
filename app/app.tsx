@@ -1,7 +1,8 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
 
-import CreateProduct from "./components/product";
+import CreateProduct from "./components/createProduct";
+import EditProduct from "./components/editProduct";
 import { default as AdminPanel, default as Home } from "./screen/home";
 import Login from "./screen/login";
 const Stack = createNativeStackNavigator();
@@ -13,6 +14,7 @@ export default function App() {
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="EditProduct" component={EditProduct} />
         <Stack.Screen name="CreateProduct" component={CreateProduct} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="AdminPanel" component={AdminPanel} />

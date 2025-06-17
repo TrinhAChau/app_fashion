@@ -98,7 +98,7 @@ const UserScreen = () => {
                     await DeteleUser(item.user_id as number, token);
                     fetchUsers();
                   } catch (error) {
-                    console.error("Lỗi khi cập nhật người dùng:", error);
+                    console.error("Lỗi khi xóa người dùng:", error);
                   }
                 }}
               />

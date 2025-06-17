@@ -12,12 +12,8 @@ const CreateCategory = async (values: object, token: string) => {
 
 // Lấy danh mục sản phẩm
 
-const GetListCategory = async (token: string) => {
-  const response = await BASE_URL.get("/categories", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+const GetListCategory = async () => {
+  const response = await BASE_URL.get("/categories", {});
   return response.data;
 };
 

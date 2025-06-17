@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -9,45 +9,36 @@ import {
 } from "react-native";
 import { Card, IconButton, Searchbar } from "react-native-paper";
 
-// Fake data sản phẩm
-const mockProducts = [
-  {
-    id: "1",
-    name: "Áo thun nam",
-    description: "Chất liệu cotton, thoáng mát",
-    quantity: 20,
-    price: 200000,
-    category: "Áo",
-    thumnails:
-      "https://th.bing.com/th/id/OIP.OFEH1_fhu1lO2diaKJ0BhAHaHa?w=196&h=196&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3",
-  },
-  {
-    id: "2",
-    name: "Quần jean nữ",
-    description: "Ôm dáng, co giãn nhẹ",
-    quantity: 15,
-    price: 350000,
-    category: "Quần",
-    thumnails:
-      "https://th.bing.com/th/id/OIP.xJ6zOHBnJfQCi9W1z1E6xwHaLH?w=137&h=205&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3",
-  },
-  {
-    id: "3",
-    name: "Áo khoác gió",
-    description: "Chống thấm, phong cách thể thao",
-    quantity: 10,
-    price: 450000,
-    category: "Áo",
-    thumnails:
-      "https://th.bing.com/th/id/OIP.sdIPfsOZdIVHQzVd609JSwHaJT?w=157&h=198&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3",
-  },
-];
+import { DeteleProduct, GetListProduct } from "@/app/api/product";
+
+import { Product } from "@/app/types/product.type";
+
+//Token
+const token =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJyb2xlX2lkIjoxLCJpYXQiOjE3NTAwMDI5ODF9.uhsG5MBzY3dAP0ZG0wcbBYf98kZRlf50iRPDmQXSUs4";
 
 const ProductScreen = ({ navigation }: any) => {
+  //Danh sách sản phẩm
+  const [products, setProducts] = useState<Product[]>([]) || null;
+
+  //Hàm lấy data DS sản phẩm
+  const fetchProducts = async () => {
+    try {
+      const response = await GetListProduct();
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh sách người dùng:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProducts = mockProducts.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //Lọc dữ liệu cho thanh tìm kiếm
+  const filteredProducts = products.filter((p) =>
+    p.product_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -61,7 +52,12 @@ const ProductScreen = ({ navigation }: any) => {
         />
         {/* Nút thêm sản phẩm*/}
         <TouchableOpacity
-          onPress={() => navigation.navigate("CreateProduct")}
+          onPress={() =>
+            navigation.navigate("CreateProduct", {
+              token: token,
+              refresh: fetchProducts,
+            })
+          }
           style={styles.addButton}
         >
           <IconButton icon="plus" iconColor="white" size={24} />
@@ -70,7 +66,7 @@ const ProductScreen = ({ navigation }: any) => {
 
       <FlatList
         data={filteredProducts}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.product_id?.toString() || ""}
         renderItem={({ item }) => (
           <Card style={styles.card}>
             <View style={styles.cardContent}>
@@ -79,17 +75,33 @@ const ProductScreen = ({ navigation }: any) => {
                 style={styles.thumnails}
               />
               <View style={styles.info}>
-                <Text style={styles.title}>{item.name}</Text>
+                <Text style={styles.title}>{item.product_name}</Text>
                 <Text>Mô tả: {item.description}</Text>
                 <Text>Số lượng: {item.quantity}</Text>
                 <Text>Đơn giá: {item.price} VNĐ</Text>
-                <Text>Danh mục: {item.category}</Text>
+                <Text>Danh mục: {item.category_name}</Text>
                 <View style={styles.actions}>
-                  <IconButton icon="pencil" onPress={() => {}} />
+                  <IconButton
+                    icon="pencil"
+                    onPress={() => {
+                      navigation.navigate("EditProduct", {
+                        productId: item.product_id,
+                        token: token,
+                        refresh: fetchProducts,
+                      });
+                    }}
+                  />
                   <IconButton
                     icon="delete"
                     iconColor="red"
-                    onPress={() => {}}
+                    onPress={async () => {
+                      try {
+                        await DeteleProduct(item.product_id as number, token);
+                        fetchProducts();
+                      } catch (error) {
+                        console.error("Lỗi khi xóa sản phẩm:", error);
+                      }
+                    }}
                   />
                 </View>
               </View>
