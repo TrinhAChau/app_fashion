@@ -8,11 +8,15 @@ const LoginAdmin = async (values: object) => {
 
 // Lấy danh sách tài khoản
 const GetListAccount = async (token: string) => {
-  const response = await BASE_URL.post("/users", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await BASE_URL.post(
+    "/users",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
   return response.data;
 };
 
@@ -23,8 +27,8 @@ const CreateUser = async (values: object) => {
 };
 
 // Sửa thông tin user
-const EditUser = async (values: object, token: string) => {
-  const response = await BASE_URL.put("/users/profile", values, {
+const EditUser = async (values: object, id: number, token: string) => {
+  const response = await BASE_URL.put(`/users/admin/${id}`, values, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -33,7 +37,7 @@ const EditUser = async (values: object, token: string) => {
 };
 
 // Xóa tài khoản user
-const DeteleUser = async (id: string, token: string) => {
+const DeteleUser = async (id: number, token: string) => {
   const response = await BASE_URL.delete(`/users/${id}`, {
     headers: {
       Authorization: `Bearer ${token}`,

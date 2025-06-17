@@ -12,4 +12,6 @@ export interface User {
   password?: string;
 
   address?: string;
+
+  role_id?: number;
 }

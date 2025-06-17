@@ -1,4 +1,4 @@
-import { GetListAccount } from "@/app/api/user";
+import { DeteleUser, EditUser, GetListAccount } from "@/app/api/user";
 import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import {
@@ -18,63 +18,38 @@ const token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJyb2xlX2lkIjoxLCJpYXQiOjE3NTAwMDI5ODF9.uhsG5MBzY3dAP0ZG0wcbBYf98kZRlf50iRPDmQXSUs4";
 const UserScreen = () => {
   // Dữ liệu mẫu người dùng
-  const mockUsers = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      email: "nguyenvana@gmail.com",
-      phone: "0901234567",
-      address: "Hà Nội",
-      role: "admin",
-    },
-    {
-      id: "2",
-      name: "Trần Thị B",
-      email: "tranthib@yahoo.com",
-      phone: "0934567890",
-      address: "TP. HCM",
-      role: "user",
-    },
-    {
-      id: "3",
-      name: "Lê Văn C",
-      email: "levanc@hotmail.com",
-      phone: "0987654321",
-      address: "Đà Nẵng",
-      role: "user",
-    },
-  ];
-  const [users, setUsers] = useState<User[]>([]);
+
+  const [users, setUsers] = useState<User[]>([]) || null;
+  const fetchUsers = async () => {
+    try {
+      // const token = await AsyncStorage.getItem("token"); // Lấy token từ storage
+      // if (!token) return;
+      const response = await GetListAccount(token);
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy danh sách người dùng:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        // const token = await AsyncStorage.getItem("token"); // Lấy token từ storage
-        // if (!token) return;
-        const response = await GetListAccount(token);
-        setUsers(response);
-      } catch (error) {
-        console.error("Lỗi lấy danh sách người dùng:", error);
-      }
-    };
     fetchUsers();
   }, []);
-
-  console.log(users);
 
   // Từ khóa tìm kiếm
   const [searchQuery, setSearchQuery] = useState("");
 
   // ID người dùng đang chỉnh sửa
-  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editUserId, setEditUserId] = useState<number | null>(null);
+
+  const [editForm, setEditForm] = useState<Partial<User>>({});
 
   // Lọc người dùng theo tên
-  const filteredUsers = mockUsers.filter((user) =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = users.filter((user) =>
+    user.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // State menu chọn quyền
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   return (
     <View style={styles.container}>
@@ -89,80 +64,133 @@ const UserScreen = () => {
       {/* Danh sách người dùng */}
       <FlatList
         data={filteredUsers}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.user_id?.toString() ?? ""}
         renderItem={({ item }) => (
           <Card style={styles.card}>
-            <Card.Title title={item.name} subtitle={`Email: ${item.email}`} />
+            <Card.Title
+              title={item.username}
+              subtitle={`Email: ${item.email}`}
+            />
             <Card.Content>
               <Text>SĐT: {item.phone}</Text>
               <Text>Địa chỉ: {item.address}</Text>
-              <Text>Quyền: {item.role === "admin" ? "Admin" : "User"}</Text>
+              <Text>Quyền: {item.role_id === 1 ? "Admin" : "User"}</Text>
             </Card.Content>
 
             <Card.Actions>
               {/* Nút sửa */}
               <IconButton
                 icon="pencil"
-                onPress={() =>
-                  setEditUserId(item.id === editUserId ? null : item.id)
-                }
+                onPress={() => {
+                  setEditUserId(
+                    item.user_id === editUserId
+                      ? null
+                      : (item.user_id as number)
+                  );
+                  setEditForm(item);
+                }}
               />
-              {/* Nút xóa - chưa xử lý */}
-              <IconButton icon="delete" iconColor="red" onPress={() => {}} />
+              <IconButton
+                icon="delete"
+                iconColor="red"
+                onPress={async () => {
+                  try {
+                    await DeteleUser(item.user_id as number, token);
+                    fetchUsers();
+                  } catch (error) {
+                    console.error("Lỗi khi cập nhật người dùng:", error);
+                  }
+                }}
+              />
             </Card.Actions>
 
             {/* Form chỉnh sửa chỉ hiển thị nếu ID đang được chọn */}
-            {editUserId === item.id && (
+            {editUserId === item.user_id && (
               <View style={styles.editForm}>
                 <TextInput
                   label="Tên"
-                  value={item.name} // ⚠️ hiện tại chưa cập nhật được value nếu người dùng chỉnh sửa
+                  value={editForm.username || ""}
                   mode="outlined"
                   style={styles.input}
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, username: text })
+                  }
                 />
                 <TextInput
                   label="Email"
-                  value={item.email}
+                  value={editForm.email || ""}
                   mode="outlined"
                   style={styles.input}
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, email: text })
+                  }
                 />
                 <TextInput
                   label="Số điện thoại"
-                  value={item.phone}
+                  value={editForm.phone || ""}
                   mode="outlined"
                   style={styles.input}
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, phone: text })
+                  }
                 />
                 <TextInput
                   label="Địa chỉ"
-                  value={item.address}
+                  value={editForm.address || ""}
                   mode="outlined"
                   style={styles.input}
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, address: text })
+                  }
                 />
 
                 {/* Dropdown chọn quyền */}
                 <Text style={styles.dropdownLabel}>Quyền</Text>
                 <Menu
-                  visible={selectedUserId === item.id}
+                  visible={selectedUserId === item.user_id}
                   onDismiss={() => setSelectedUserId(null)}
                   anchor={
                     <List.Item
-                      title={item.role === "admin" ? "Admin" : "User"}
-                      onPress={() => setSelectedUserId(item.id)}
+                      title={editForm.role_id === 1 ? "Admin" : "User"}
+                      onPress={() => setSelectedUserId(item.user_id as number)}
                       titleStyle={styles.dropdownText}
                       style={styles.dropdown}
                     />
                   }
                 >
-                  {/* ⚠️ 2 Menu.Item bên dưới chưa gán lại role cho user */}
-                  <Menu.Item onPress={() => {}} title="Admin" />
-                  <Menu.Item onPress={() => {}} title="User" />
+                  <Menu.Item
+                    onPress={() => {
+                      setEditForm({ ...editForm, role_id: 1 });
+                      setSelectedUserId(null);
+                    }}
+                    title="Admin"
+                  />
+                  <Menu.Item
+                    onPress={() => {
+                      setEditForm({ ...editForm, role_id: 2 });
+                      setSelectedUserId(null);
+                    }}
+                    title="User"
+                  />
                 </Menu>
 
                 {/* Nút lưu */}
                 <Button
                   mode="contained"
                   style={styles.button}
-                  onPress={() => setEditUserId(null)} // ⚠️ chỉ tắt form, chưa cập nhật dữ liệu
+                  onPress={async () => {
+                    try {
+                      const respone = await EditUser(
+                        editForm,
+                        editUserId,
+                        token
+                      );
+                      setEditUserId(null);
+                      fetchUsers();
+                    } catch (error) {
+                      console.error("Lỗi khi cập nhật người dùng:", error);
+                    }
+                  }}
                 >
                   Lưu
                 </Button>
