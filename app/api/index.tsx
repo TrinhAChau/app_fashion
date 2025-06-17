@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BASE_URL = axios.create({
-  baseURL: "http://10.0.2.2:3000",
+  baseURL: "http://cshapi.ddns.net:3000/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

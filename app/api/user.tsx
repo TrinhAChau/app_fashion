@@ -8,7 +8,7 @@ const LoginAdmin = async (values: object) => {
 
 // Lấy danh sách tài khoản
 const GetListAccount = async (token: string) => {
-  const response = await BASE_URL.get("users", {
+  const response = await BASE_URL.post("/users", {
     headers: {
       Authorization: `Bearer ${token}`,
     },

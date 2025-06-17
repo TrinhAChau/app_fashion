@@ -51,7 +51,6 @@ const UserScreen = () => {
       try {
         // const token = await AsyncStorage.getItem("token"); // Lấy token từ storage
         // if (!token) return;
-
         const response = await GetListAccount(token);
         setUsers(response);
       } catch (error) {
