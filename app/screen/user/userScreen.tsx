@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { GetListAccount } from "@/app/api/user";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import {
   Button,
@@ -11,6 +12,10 @@ import {
   TextInput,
 } from "react-native-paper";
 
+import { User } from "../../types/user.type";
+
+const token =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJyb2xlX2lkIjoxLCJpYXQiOjE3NTAwMDI5ODF9.uhsG5MBzY3dAP0ZG0wcbBYf98kZRlf50iRPDmQXSUs4";
 const UserScreen = () => {
   // Dữ liệu mẫu người dùng
   const mockUsers = [
@@ -39,6 +44,24 @@ const UserScreen = () => {
       role: "user",
     },
   ];
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // const token = await AsyncStorage.getItem("token"); // Lấy token từ storage
+        // if (!token) return;
+
+        const response = await GetListAccount(token);
+        setUsers(response);
+      } catch (error) {
+        console.error("Lỗi lấy danh sách người dùng:", error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  console.log(users);
 
   // Từ khóa tìm kiếm
   const [searchQuery, setSearchQuery] = useState("");
